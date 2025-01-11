@@ -54,7 +54,7 @@
             "async": false,
             "constraints": "",
             "deprecated": "",
-            "description": "Tags:\n        hello, what, up.",
+            "description": "Tags:\n        hello.",
             "isDef": false,
             "isStatic": false,
             "kind": "function",

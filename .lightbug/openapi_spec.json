@@ -42,9 +42,7 @@
                 "operationId": "hello",
                 "description": "Simple hello world function.",
                 "tags": [
-                    "\n        hello",
-                    "what",
-                    "up"
+                    "hello"
                 ],
                 "responses": {
                     "200": {

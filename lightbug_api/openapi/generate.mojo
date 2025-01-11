@@ -1,6 +1,5 @@
 from collections.dict import Dict
 from external.emberjson import JSON, Value, Array, Object, ParseOptions, parse, to_string
-from lightbug_api.logger import logger
 
 struct OpenAPIGenerator:
     var tags: List[Value]
@@ -15,7 +14,6 @@ struct OpenAPIGenerator:
         self.tags = tags
 
     fn create_paths(mut self, mojo_doc: JSON, router_metadata: JSON) raises -> JSON:
-        logger.info("Adding paths")
         var paths = JSON()
         var route_map = Dict[String, Tuple[String, String]]()
         var routes = router_metadata["routes"][Array]._data
@@ -25,7 +23,6 @@ struct OpenAPIGenerator:
             var path = route["path"][String].strip('"')
             var method = String(route["method"][String].strip('"')).lower()
             route_map[handler] = (String(path), method)
-            logger.info("Added to route map: " + method + " " + path + " -> " + handler)
         
         for func in mojo_doc["decl"][Object]["functions"][Array]._data:
             var func_name = func[][Object]["name"].__str__().strip('"')
@@ -40,7 +37,6 @@ struct OpenAPIGenerator:
             var endpoint = self.create_endpoint(func[].object(), http_method)
             
             if paths.__contains__(path):
-                logger.info("Path already exists: " + path + ", adding method: " + http_method)
                 var new_path_item = JSON()
                 var existing_path_item = paths[path][Object]
                 
@@ -52,7 +48,6 @@ struct OpenAPIGenerator:
                 
                 paths[path] = new_path_item.object()
             else:
-                logger.info("Creating new path: " + path + ", adding method: " + http_method)
                 var path_item = JSON()
                 path_item[http_method] = endpoint.object()
                 paths[path] = path_item.object()
@@ -60,7 +55,6 @@ struct OpenAPIGenerator:
         return paths
 
     fn create_endpoint(mut self, function_data: JSON, http_method: String) raises -> JSON:
-        logger.info("Creating endpoint for " + String(function_data["name"].__str__().strip('"')))
         var endpoint = JSON()
         var func_name = function_data["name"]
         endpoint["summary"] = String(func_name.__str__().strip('"')) + " endpoint"
@@ -133,7 +127,6 @@ struct OpenAPIGenerator:
         return endpoint
 
     fn create_components_schema(self) raises -> JSON:
-        logger.info("Adding components schema")
         var components = JSON()
         var schemas = JSON()
         
@@ -179,7 +172,6 @@ struct OpenAPIGenerator:
         return components
 
     fn generate_spec(mut self, mojo_doc: JSON, router_metadata: JSON) raises -> JSON:
-        logger.info("Generating OpenAPI specification")
         var spec = JSON()
         
         spec["openapi"] = "3.0.0"
@@ -196,18 +188,14 @@ struct OpenAPIGenerator:
         return spec
 
     fn read_mojo_doc(self, filename: String) raises -> JSON:
-        logger.info("Reading the output of the mojo doc command")
         with open(filename, "r") as mojo_doc:
             return parse[ParseOptions(fast_float_parsing=True)](mojo_doc.read())
 
     fn read_router_metadata(self, filename: String) raises -> JSON:
-        logger.info("Reading Lightbug API router metadata")
         with open(filename, "r") as router_metadata:
             return parse[ParseOptions(fast_float_parsing=True)](router_metadata.read())
     
     fn save_spec(self, spec: JSON, filename: String) raises:
-        logger.info("Saving generated OpenAPI specification to " + filename)
         with open(filename, "w") as f:
             f.write(to_string[pretty=True](spec))
-        logger.info("OpenAPI specification has been generated and saved")
         
