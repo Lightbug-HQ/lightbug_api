@@ -1,0 +1,104 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "printer",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Any arbitrary HTTP request with a body.",
+                "kind": "argument",
+                "name": "req",
+                "passingKind": "pos_or_kw",
+                "type": "HTTPRequest"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "isDef": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "printer",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returnType": "HTTPResponse",
+            "returnsDoc": "HTTPResponse: 200 OK with the request body.",
+            "signature": "printer(req: HTTPRequest) -> HTTPResponse",
+            "summary": "Prints the request body and returns it."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "hello",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Any arbitrary HTTP request.",
+                "kind": "argument",
+                "name": "req",
+                "passingKind": "pos_or_kw",
+                "type": "HTTPRequest"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "Tags:\n        hello, what, up.",
+            "isDef": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "hello",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returnType": "HTTPResponse",
+            "returnsDoc": "HTTPResponse: 200 OK with a Hello World message.",
+            "signature": "hello(req: HTTPRequest) -> HTTPResponse",
+            "summary": "Simple hello world function."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "main",
+        "overloads": [
+          {
+            "args": [],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "isDef": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "main",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returnType": null,
+            "returnsDoc": "",
+            "signature": "main()",
+            "summary": ""
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "lightbug",
+    "structs": [],
+    "summary": "",
+    "traits": []
+  },
+  "version": "24.6.0"
+}

@@ -1,0 +1,14 @@
+{
+    "routes": [
+        {
+            "path": "/",
+            "method": "GET",
+            "handler": "hello"
+        },
+        {
+            "path": "/printer",
+            "method": "POST",
+            "handler": "printer"
+        }
+    ]
+}

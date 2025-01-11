@@ -1,19 +1,39 @@
-from lightbug_api import App
+from lightbug_api.app import App
 from lightbug_http import HTTPRequest, HTTPResponse, OK
 
 @always_inline
 fn printer(req: HTTPRequest) -> HTTPResponse:
+        """Prints the request body and returns it.
+
+        Args:
+            req: Any arbitrary HTTP request with a body.
+
+        Returns:
+                HTTPResponse: 200 OK with the request body.
+        """
+
         print("Got a request on ", req.uri.path, " with method ", req.method)
         return OK(req.body_raw)
 
 @always_inline
 fn hello(req: HTTPRequest) -> HTTPResponse:
+        """Simple hello world function.
+
+        Args:
+            req: Any arbitrary HTTP request.
+
+        Returns:
+                HTTPResponse: 200 OK with a Hello World message.
+
+        Tags:
+                hello, what, up.
+        """
         return OK("Hello 🔥!")
 
 fn main() raises:
     var app = App()
 
-    app.get("/", hello)
-    app.post("/", printer)
+    app.get("/", hello, "hello")
+    app.post("/printer", printer, "printer")
 
     app.start_server()
