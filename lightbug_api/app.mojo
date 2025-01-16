@@ -3,10 +3,10 @@ from os.path import exists
 from pathlib import Path
 from sys.ffi import external_call
 from lightbug_http import HTTPRequest, HTTPResponse, Server, NotFound
+from lightbug_http.utils import logger
 from emberjson import JSON, Array, Object, Value, to_string
 from lightbug_api.openapi.generate import OpenAPIGenerator
 from lightbug_api.routing import Router
-from lightbug_api.logger import logger
 from lightbug_api.docs import DocsApp
 
 @value

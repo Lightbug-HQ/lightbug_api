@@ -1,5 +1,5 @@
 from lightbug_http import Server, HTTPRequest, HTTPResponse, OK
-from lightbug_api.logger import logger
+from lightbug_http.utils import logger
 
 @value
 struct DocsApp:
