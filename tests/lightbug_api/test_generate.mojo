@@ -123,9 +123,9 @@ def test_endpoint_tags():
     assert_true("tags" in endpoint)
     var tag_array = endpoint["tags"][Array]
     assert_equal(len(tag_array), 3)
-    assert_equal(tag_array[0].__str__(), '"api"')
-    assert_equal(tag_array[1].__str__(), '"test"')
-    assert_equal(tag_array[2].__str__(), '"auth"')
+    assert_equal(str(tag_array[0]), '"api"')
+    assert_equal(str(tag_array[1]), '"test"')
+    assert_equal(str(tag_array[2]), '"auth"')
 
     # Test 2: Tags with control characters
     var function_data_control_chars = JSON.from_string('''
@@ -147,9 +147,9 @@ def test_endpoint_tags():
     assert_true("tags" in endpoint_control_chars)
     var tag_array_control_chars = endpoint_control_chars["tags"][Array]
     assert_equal(len(tag_array_control_chars), 3)
-    assert_equal(tag_array_control_chars[0].__str__(), '"hello"')
-    assert_equal(tag_array_control_chars[1].__str__(), '"what"')
-    assert_equal(tag_array_control_chars[2].__str__(), '"up"')
+    assert_equal(str(tag_array_control_chars[0]), '"hello"')
+    assert_equal(str(tag_array_control_chars[1]), '"what"')
+    assert_equal(str(tag_array_control_chars[2]), '"up"')
 
     # Test 3: Tags with extra whitespace
     var function_data_whitespace = JSON.from_string("""
@@ -171,9 +171,9 @@ def test_endpoint_tags():
     assert_true("tags" in endpoint_whitespace)
     var tag_array_whitespace = endpoint_whitespace["tags"][Array]
     assert_equal(len(tag_array_whitespace), 3)
-    assert_equal(tag_array_whitespace[0].__str__(), '"api"')
-    assert_equal(tag_array_whitespace[1].__str__(), '"test"')
-    assert_equal(tag_array_whitespace[2].__str__(), '"auth"')
+    assert_equal(str(tag_array_whitespace[0]), '"api"')
+    assert_equal(str(tag_array_whitespace[1]), '"test"')
+    assert_equal(str(tag_array_whitespace[2]), '"auth"')
 
     # Test 4: No tags
     var function_data_no_tags = JSON.from_string("""

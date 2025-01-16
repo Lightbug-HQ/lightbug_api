@@ -68,7 +68,7 @@ struct App[docs_enabled: Bool = False]:
         with open((lightbug_dir / "routes.json"), "w") as f:
             f.write(to_string[pretty=True](routes_obj))
         
-        var mojodoc_status = external_call["system", UInt8]("magic run mojo doc ./lightbug.🔥 -o " + lightbug_dir.__str__() + "/mojodoc.json")
+        var mojodoc_status = external_call["system", UInt8]("magic run mojo doc ./lightbug.🔥 -o " + str(lightbug_dir) + "/mojodoc.json")
         if mojodoc_status != 0:
             logger.error("Failed to generate mojodoc.json")
             return
@@ -77,16 +77,16 @@ struct App[docs_enabled: Bool = False]:
         var generator = OpenAPIGenerator()
         
         var mojo_doc_json = generator.read_mojo_doc(
-            (self.lightbug_dir / "mojodoc.json").__str__()
+            str(self.lightbug_dir / "mojodoc.json")
         )
         var router_metadata_json = generator.read_router_metadata(
-            (self.lightbug_dir / "routes.json").__str__()
+            str(self.lightbug_dir / "routes.json")
         )
         
         var openapi_spec = generator.generate_spec(mojo_doc_json, router_metadata_json)
         generator.save_spec(
             openapi_spec, 
-            (self.lightbug_dir / "openapi_spec.json").__str__()
+            str(self.lightbug_dir / "openapi_spec.json")
         )
         return openapi_spec
 

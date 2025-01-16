@@ -19,13 +19,13 @@ struct OpenAPIGenerator:
         var routes = router_metadata["routes"][Array]._data
         for i in range(len(routes)):
             var route = routes[i][Object]
-            var handler = route["handler"].__str__().strip('"')
+            var handler = str(route["handler"]).strip('"')
             var path = route["path"][String].strip('"')
             var method = String(route["method"][String].strip('"')).lower()
             route_map[handler] = (String(path), method)
         
         for func in mojo_doc["decl"][Object]["functions"][Array]._data:
-            var func_name = func[][Object]["name"].__str__().strip('"')
+            var func_name = str(func[][Object]["name"]).strip('"')
             
             if func_name not in route_map:
                 continue
@@ -57,7 +57,7 @@ struct OpenAPIGenerator:
     fn create_endpoint(mut self, function_data: JSON, http_method: String) raises -> JSON:
         var endpoint = JSON()
         var func_name = function_data["name"]
-        endpoint["summary"] = String(func_name.__str__().strip('"')) + " endpoint"
+        endpoint["summary"] = String(str(func_name).strip('"')) + " endpoint"
         endpoint["operationId"] = func_name
         
         var responses = JSON()
@@ -71,11 +71,11 @@ struct OpenAPIGenerator:
         for i in range(len(overloads)):
             var overload = overloads[i][Array][0] # first overload only for now
             if "returnsDoc" in overload[Object]._data:
-                response_description = String(overload[Object]["returnsDoc"].__str__().strip('"'))
+                response_description = String(str(overload[Object]["returnsDoc"]).strip('"'))
             if "summary" in overload[Object]._data:
-                endpoint["description"] = String(overload[Object]["summary"].__str__().strip('"'))
-            if "description" in overload[Object]._data and overload[Object]["description"].__str__().__contains__("Tags:"):
-                var description = overload[Object]["description"].__str__()
+                endpoint["description"] = String(str(overload[Object]["summary"]).strip('"'))
+            if "description" in overload[Object]._data and str(overload[Object]["description"]).__contains__("Tags:"):
+                var description = str(overload[Object]["description"])
                 var tags_part = description.split("Tags:")[1]
                 var tags_str = String(tags_part.strip().rstrip('."'))
                 var tags = tags_str.split(",")
@@ -83,7 +83,7 @@ struct OpenAPIGenerator:
                 for tag in tags:
                     var stripped_tag = String(tag[].strip()).replace("\\n", "").replace("\\t", "").replace("\\r", "")
                     var cleaned_tag = stripped_tag.strip("  ")
-                    tag_values.append(Value(cleaned_tag.__str__()))
+                    tag_values.append(Value(str(cleaned_tag)))
 
                 self.set_tags(tag_values)
                 endpoint["tags"] = Array(tag_values)
@@ -93,7 +93,7 @@ struct OpenAPIGenerator:
                 for i in range(len(args)):
                     var arg = args[0][Array][i][Object]
                     if "description" in arg._data:
-                        request_description = String(arg["description"].__str__().strip('"'))
+                        request_description = String(str(arg["description"]).strip('"'))
             break
         
         response_200["description"] = response_description
