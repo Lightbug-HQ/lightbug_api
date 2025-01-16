@@ -1,19 +1,22 @@
 from lightbug_http import HTTPRequest, HTTPResponse, NotFound
 
 
-@value
+@register_passable("trivial")
 struct APIRoute:
-    var path: String
-    var method: String
+    var path: StringLiteral
+    var method: StringLiteral
     var handler: fn (HTTPRequest) -> HTTPResponse
 
+    fn __init__(out self, path: StringLiteral, method: StringLiteral, handler: fn (HTTPRequest) -> HTTPResponse):
+        self.path = path
+        self.method = method
+        self.handler = handler
 
-@value
-struct Router:
-    var routes: List[APIRoute]
 
-    fn __init__(inout self):
-        self.routes = List[APIRoute]()
+@register_passable("trivial")
+struct Router[*Ts: APIRoute]:
+    var routes: VariadicList[APIRoute]
 
-    fn add_route(inout self, path: String, method: String, handler: fn (HTTPRequest) -> HTTPResponse):
-        self.routes.append(APIRoute(path, method, handler))
+    @always_inline
+    fn __init__(inout self, routes: VariadicList[APIRoute]):
+        self.routes = routes

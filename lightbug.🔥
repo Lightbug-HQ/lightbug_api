@@ -1,5 +1,6 @@
-from lightbug_api import App
 from lightbug_http import HTTPRequest, HTTPResponse, OK
+from lightbug_api.app import App
+from lightbug_api.routing import APIRoute
 
 @always_inline
 fn printer(req: HTTPRequest) -> HTTPResponse:
@@ -8,12 +9,12 @@ fn printer(req: HTTPRequest) -> HTTPResponse:
 
 @always_inline
 fn hello(req: HTTPRequest) -> HTTPResponse:
-        return OK("Hello 🔥!")
+        return OK("Hello, 🔥!", "text/plain; charset=utf-8")
 
 fn main() raises:
-    var app = App()
-
-    app.get("/", hello)
-    app.post("/", printer)
+    var app = App(
+        APIRoute("/printer", "POST", printer), 
+        APIRoute("/hello", "GET", hello)
+    )
 
     app.start_server()

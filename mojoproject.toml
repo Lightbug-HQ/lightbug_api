@@ -19,5 +19,5 @@ test = { cmd = "magic run mojo test -I . tests" }
 format = { cmd = "magic run mojo format -l 120 lightbug_api" }
 
 [dependencies]
-max = ">=24.5.0,<25"
-lightbug_http = "0.1.4"
+max = ">=24.6.0,<25"
+lightbug_http = "0.1.8"
