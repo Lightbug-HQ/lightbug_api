@@ -49,6 +49,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dnspython-2.7.0-pyhff2d567_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.2.0-hd8ed1ab_1.conda
+      - conda: https://repo.prefix.dev/mojo-community/linux-64/emberjson-0.1.1-hb0f4dca_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.2.2-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fastapi-0.115.6-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fastapi-cli-0.0.7-pyhd8ed1ab_0.conda
@@ -267,6 +268,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/dnspython-2.7.0-pyhff2d567_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email-validator-2.2.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/email_validator-2.2.0-hd8ed1ab_1.conda
+      - conda: https://repo.prefix.dev/mojo-community/osx-arm64/emberjson-0.1.1-h60d57d3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.2.2-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fastapi-0.115.6-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/fastapi-cli-0.0.7-pyhd8ed1ab_0.conda
@@ -1638,6 +1640,34 @@ packages:
   license: Unlicense
   size: 6552
   timestamp: 1733300828176
+- kind: conda
+  name: emberjson
+  version: 0.1.1
+  build: h60d57d3_0
+  subdir: osx-arm64
+  url: https://repo.prefix.dev/mojo-community/osx-arm64/emberjson-0.1.1-h60d57d3_0.conda
+  sha256: 2f684a57551b43254573eb4ef0be49d8de45df046d4693a1e467f8b0cf820a88
+  depends:
+  - max ==24.6.0
+  arch: arm64
+  platform: osx
+  license: MIT
+  size: 681608
+  timestamp: 1736671803271
+- kind: conda
+  name: emberjson
+  version: 0.1.1
+  build: hb0f4dca_0
+  subdir: linux-64
+  url: https://repo.prefix.dev/mojo-community/linux-64/emberjson-0.1.1-hb0f4dca_0.conda
+  sha256: 31b60dbaad341c90c47f555e01ce2e6fe4290a7ff8bbfe2994266b88210b46a0
+  depends:
+  - max ==24.6.0
+  arch: x86_64
+  platform: linux
+  license: MIT
+  size: 681619
+  timestamp: 1736671846359
 - kind: conda
   name: exceptiongroup
   version: 1.2.2

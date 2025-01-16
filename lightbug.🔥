@@ -30,7 +30,7 @@ fn hello(req: HTTPRequest) -> HTTPResponse:
         return OK("Hello 🔥!", "text/plain; charset=utf-8")
 
 fn main() raises:
-    var app = App()
+    var app = App[docs_enabled=True]()
 
     app.get("/", hello, "hello")
     app.post("/printer", printer, "printer")

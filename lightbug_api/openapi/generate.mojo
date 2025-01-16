@@ -1,5 +1,5 @@
 from collections.dict import Dict
-from external.emberjson import JSON, Value, Array, Object, ParseOptions, parse, to_string
+from emberjson import JSON, Value, Array, Object, ParseOptions, parse, to_string
 
 struct OpenAPIGenerator:
     var tags: List[Value]

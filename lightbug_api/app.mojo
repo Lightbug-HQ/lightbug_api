@@ -3,33 +3,26 @@ from os.path import exists
 from pathlib import Path
 from sys.ffi import external_call
 from lightbug_http import HTTPRequest, HTTPResponse, Server, NotFound
-from external.emberjson import JSON, Array, Object, Value, to_string
+from emberjson import JSON, Array, Object, Value, to_string
 from lightbug_api.openapi.generate import OpenAPIGenerator
 from lightbug_api.routing import Router
 from lightbug_api.logger import logger
 from lightbug_api.docs import DocsApp
 
 @value
-struct App:
+struct App[docs_enabled: Bool = False]:
     var router: Router
     var lightbug_dir: Path
-    var docs_enabled: Bool
 
     fn __init__(inout self) raises:
         self.router = Router()
         self.lightbug_dir = Path()
-        self.docs_enabled = True
-
-    fn __init__(inout self, docs_enabled: Bool) raises:
-        self.router = Router()
-        self.lightbug_dir = Path()
-        self.docs_enabled = docs_enabled
 
     fn set_lightbug_dir(mut self, lightbug_dir: Path):
         self.lightbug_dir = lightbug_dir
 
     fn func(mut self, req: HTTPRequest) raises -> HTTPResponse:
-        if self.docs_enabled and req.uri.path == "/docs" and req.method == "GET":
+        if docs_enabled and req.uri.path == "/docs" and req.method == "GET":
                 var openapi_spec = self.generate_openapi_spec()
                 var docs = DocsApp(to_string(openapi_spec))
                 return docs.func(req)
@@ -98,7 +91,7 @@ struct App:
         return openapi_spec
 
     fn start_server(mut self, address: StringLiteral = "0.0.0.0:8080") raises:
-        if self.docs_enabled:
+        if docs_enabled:
             logger.info("API Docs ready at: " + "http://" + String(address) + "/docs")
         self.update_temporary_files()
         var server = Server()

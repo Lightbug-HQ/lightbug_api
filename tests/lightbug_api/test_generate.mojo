@@ -1,5 +1,5 @@
 from testing import *
-from external.emberjson import JSON, Object, Array
+from emberjson import JSON, Object, Array
 from lightbug_api.openapi.generate import OpenAPIGenerator
 
 def test_create_endpoint():
