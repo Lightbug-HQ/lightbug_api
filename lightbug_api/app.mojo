@@ -9,6 +9,7 @@ from lightbug_api.openapi.generate import OpenAPIGenerator
 from lightbug_api.routing import Router
 from lightbug_api.docs import DocsApp
 
+
 @value
 struct App[docs_enabled: Bool = False]:
     var router: Router
@@ -23,9 +24,9 @@ struct App[docs_enabled: Bool = False]:
 
     fn func(mut self, req: HTTPRequest) raises -> HTTPResponse:
         if docs_enabled and req.uri.path == "/docs" and req.method == "GET":
-                var openapi_spec = self.generate_openapi_spec()
-                var docs = DocsApp(to_string(openapi_spec))
-                return docs.func(req)
+            var openapi_spec = self.generate_openapi_spec()
+            var docs = DocsApp(to_string(openapi_spec))
+            return docs.func(req)
         for route_ptr in self.router.routes:
             var route = route_ptr[]
             if route.path == req.uri.path and route.method == req.method:
@@ -47,7 +48,7 @@ struct App[docs_enabled: Bool = False]:
     fn update_temporary_files(mut self) raises:
         var routes_obj = Object()
         var routes = List[Value]()
-        
+
         for route_ptr in self.router.routes:
             var route = route_ptr[]
             var route_obj = Object()
@@ -55,39 +56,34 @@ struct App[docs_enabled: Bool = False]:
             route_obj["method"] = route.method
             route_obj["handler"] = route.operation_id
             routes.append(route_obj)
-        
+
         routes_obj["routes"] = Array.from_list(routes)
         var cwd = Path()
         var lightbug_dir = cwd / ".lightbug"
         self.set_lightbug_dir(lightbug_dir)
-        
+
         if not exists(lightbug_dir):
             logger.info("Creating .lightbug directory")
             mkdir(lightbug_dir)
-        
+
         with open((lightbug_dir / "routes.json"), "w") as f:
             f.write(to_string[pretty=True](routes_obj))
-        
-        var mojodoc_status = external_call["system", UInt8]("magic run mojo doc ./lightbug.🔥 -o " + str(lightbug_dir) + "/mojodoc.json")
+
+        var mojodoc_status = external_call["system", UInt8](
+            "magic run mojo doc ./lightbug.🔥 -o " + str(lightbug_dir) + "/mojodoc.json"
+        )
         if mojodoc_status != 0:
             logger.error("Failed to generate mojodoc.json")
             return
 
     fn generate_openapi_spec(self) raises -> JSON:
         var generator = OpenAPIGenerator()
-        
-        var mojo_doc_json = generator.read_mojo_doc(
-            str(self.lightbug_dir / "mojodoc.json")
-        )
-        var router_metadata_json = generator.read_router_metadata(
-            str(self.lightbug_dir / "routes.json")
-        )
-        
+
+        var mojo_doc_json = generator.read_mojo_doc(str(self.lightbug_dir / "mojodoc.json"))
+        var router_metadata_json = generator.read_router_metadata(str(self.lightbug_dir / "routes.json"))
+
         var openapi_spec = generator.generate_spec(mojo_doc_json, router_metadata_json)
-        generator.save_spec(
-            openapi_spec, 
-            str(self.lightbug_dir / "openapi_spec.json")
-        )
+        generator.save_spec(openapi_spec, str(self.lightbug_dir / "openapi_spec.json"))
         return openapi_spec
 
     fn start_server(mut self, address: StringLiteral = "0.0.0.0:8080") raises:

@@ -1,12 +1,14 @@
 from lightbug_http import Server, HTTPRequest, HTTPResponse, OK
 from lightbug_http.utils import logger
 
+
 @value
 struct DocsApp:
     var openapi_spec: String
 
     fn func(mut self, req: HTTPRequest) raises -> HTTPResponse:
-        var html_response = String("""
+        var html_response = String(
+            """
         <!doctype html>
 <html>
   <head>
@@ -25,7 +27,8 @@ struct DocsApp:
 <script src="https://cdn.jsdelivr.net/npm/@scalar/api-reference"></script>
   </body>
 </html>
-        """).format(self.openapi_spec)
+        """
+        ).format(self.openapi_spec)
         return OK(html_response, "text/html; charset=utf-8")
 
     fn set_openapi_spec(mut self, openapi_spec: String):
