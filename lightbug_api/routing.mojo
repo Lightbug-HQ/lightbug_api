@@ -36,7 +36,7 @@ struct APIRoute(CollectionElement):
 struct Router:
     var routes: List[APIRoute]
 
-    fn __init__(inout self):
+    fn __init__(out self):
         self.routes = List[APIRoute]()
 
     fn __copyinit__(out self: Router, existing: Router):
@@ -45,5 +45,5 @@ struct Router:
     fn __moveinit__(out self: Router, owned existing: Router):
         self.routes = existing.routes
 
-    fn add_route(inout self, path: String, method: String, handler: fn (HTTPRequest) -> HTTPResponse, operation_id: String):
+    fn add_route(out self, path: String, method: String, handler: fn (HTTPRequest) -> HTTPResponse, operation_id: String):
         self.routes.append(APIRoute(path, method, handler, operation_id))

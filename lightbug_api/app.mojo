@@ -14,7 +14,7 @@ struct App[docs_enabled: Bool = False]:
     var router: Router
     var lightbug_dir: Path
 
-    fn __init__(inout self) raises:
+    fn __init__(out self) raises:
         self.router = Router()
         self.lightbug_dir = Path()
 
