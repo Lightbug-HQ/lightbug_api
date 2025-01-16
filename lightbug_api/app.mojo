@@ -86,9 +86,9 @@ struct App[docs_enabled: Bool = False]:
         generator.save_spec(openapi_spec, str(self.lightbug_dir / "openapi_spec.json"))
         return openapi_spec
 
-    fn start_server(mut self, address: StringLiteral = "0.0.0.0:8080") raises:
+    fn start_server(mut self, address: String = "0.0.0.0:8080") raises:
         if docs_enabled:
-            logger.info("API Docs ready at: " + "http://" + String(address) + "/docs")
+            logger.info("API Docs ready at: " + "http://" + address + "/docs")
         self.update_temporary_files()
         var server = Server()
         server.listen_and_serve(address, self)
