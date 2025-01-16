@@ -26,10 +26,10 @@ struct APIRoute(CollectionElement):
         self.operation_id = existing.operation_id
 
     fn __moveinit__(out self: APIRoute, owned existing: APIRoute):
-        self.path = existing.path
-        self.method = existing.method
+        self.path = existing.path^
+        self.method = existing.method^
         self.handler = existing.handler
-        self.operation_id = existing.operation_id
+        self.operation_id = existing.operation_id^
 
 
 @value
