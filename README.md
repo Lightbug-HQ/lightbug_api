@@ -95,13 +95,57 @@ Once you have a Mojo project set up locally,
     fn main() raises:
         var app = App()
 
-        app.get("/", hello)
-        app.post("/", printer)
+        app.get("/", hello, "hello")
+        app.post("/printer", printer, "printer")
 
         app.start_server()
    ```
 7. Excellent 😈. Your app is now listening on the selected port. 
    You've got yourself a pure-Mojo API! 🔥
+
+## API Docs
+Lightbug serves API docs for your app automatically at `/docs` by default.
+To disable this, add the `docs_enabled=False` flag when creating a new app instance: `App(docs_enabled=False)`.
+To describe your routes, add Mojo docstring annotations like below:
+
+```mojo
+
+@always_inline
+fn printer(req: HTTPRequest) -> HTTPResponse:
+        """Prints the request body and returns it.
+
+        Args:
+            req: Any arbitrary HTTP request with a body.
+
+        Returns:
+                HTTPResponse: 200 OK with the request body.
+        """
+        print("Got a request on ", req.uri.path, " with method ", req.method)
+        return OK(req.body_raw)
+
+@always_inline
+fn hello(req: HTTPRequest) -> HTTPResponse:
+        """Simple hello world function.
+
+        Args:
+            req: Any arbitrary HTTP request.
+
+        Returns:
+                HTTPResponse: 200 OK with a Hello World message.
+
+        Tags:
+                hello.
+        """
+        return OK("Hello 🔥!", "text/plain; charset=utf-8")
+
+fn main() raises:
+    var app = App()
+
+    app.get("/", hello, "hello")
+    app.post("/printer", printer, "printer")
+
+    app.start_server()
+```
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
