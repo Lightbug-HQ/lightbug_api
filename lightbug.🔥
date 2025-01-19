@@ -17,7 +17,7 @@ fn hello(req: HTTPRequest) -> HTTPResponse:
 fn main() raises:
     alias router = Router[
         APIRoute["/", "GET", hello](),
-        # APIRoute["/print", "POST", printer]()
+        # APIRoute["/print", "POST", printer]() # - TODO: fails currently with more than one route
     ]()
     var app = App[router]()
     
