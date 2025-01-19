@@ -2,20 +2,23 @@ from lightbug_http import HTTPRequest, HTTPResponse, OK
 from lightbug_api.app import App
 from lightbug_api.routing import Router, APIRoute
 
+
 @always_inline
 fn printer(req: HTTPRequest) -> HTTPResponse:
         print("Got a request on ", req.uri.path, " with method ", req.method)
         return OK(req.body_raw)
 
+
 @always_inline
 fn hello(req: HTTPRequest) -> HTTPResponse:
         return OK("Hello, 🔥!", "text/plain; charset=utf-8")
 
-fn main() raises:
-    var router = 
-        Router[
-        APIRoute["/printer", "POST", printer], 
-        APIRoute["/hello", "GET", hello]
-        ]()
 
-#     app.start_server()
+fn main() raises:
+    alias router = Router[
+        APIRoute["/", "GET", hello](),
+        # APIRoute["/print", "POST", printer]()
+    ]()
+    var app = App[router]()
+    
+    app.start_server()

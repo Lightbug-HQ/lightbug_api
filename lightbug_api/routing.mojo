@@ -1,5 +1,6 @@
 from lightbug_http import HTTPRequest, HTTPResponse, NotFound
 
+
 alias allowed_methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 
@@ -9,16 +10,8 @@ struct APIRoute[path: StringLiteral, method: StringLiteral, handler: fn (HTTPReq
         constrained[method in allowed_methods, "Invalid method"]()
 
 
-@register_passable("trivial")
 struct Router[
-    path: StringLiteral, 
-    method: StringLiteral, 
-    handler: fn (HTTPRequest) -> HTTPResponse,
-    //,
-    *Routes: APIRoute[path, method, handler]
+    *routes: APIRoute,
 ]:
-    var routes: VariadicList[APIRoute[path, method, handler]]
-
-    @always_inline
-    fn __init__(inout self, *routes: APIRoute[path, method, handler]):
-        self.routes = VariadicList(routes)
+    fn __init__(out self):
+        pass
