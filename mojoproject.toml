@@ -13,11 +13,11 @@ repository = "https://github.com/saviorand/lightbug_api"
 [tasks]
 build = { cmd = "bash scripts/build.sh default", env = {MODULAR_MOJO_IMPORT_PATH = "$CONDA_PREFIX/lib/mojo"} }
 publish = { cmd = "bash scripts/publish.sh mojo-community", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
-bp = { depends_on=["build", "publish"] }
+bp = { depends-on=["build", "publish"] }
 template = { cmd = "magic run python scripts/templater.py -m default" }
 test = { cmd = "magic run mojo test -I . tests" }
 format = { cmd = "magic run mojo format -l 120 lightbug_api" }
 
 [dependencies]
-max = ">=24.5.0,<25"
-lightbug_http = "0.1.4"
+max = ">=24.6.0,<25"
+lightbug_http = "0.1.8"

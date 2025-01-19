@@ -1,19 +1,17 @@
 from lightbug_http import HTTPRequest, HTTPResponse, NotFound
 
 
-@value
-struct APIRoute:
-    var path: String
-    var method: String
-    var handler: fn (HTTPRequest) -> HTTPResponse
+alias allowed_methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
 
 
-@value
-struct Router:
-    var routes: List[APIRoute]
+@register_passable("trivial")
+struct APIRoute[path: StringLiteral, method: StringLiteral, handler: fn (HTTPRequest) -> HTTPResponse]:
+    fn __init__(out self):
+        constrained[method in allowed_methods, "Invalid method"]()
 
-    fn __init__(inout self):
-        self.routes = List[APIRoute]()
 
-    fn add_route(inout self, path: String, method: String, handler: fn (HTTPRequest) -> HTTPResponse):
-        self.routes.append(APIRoute(path, method, handler))
+struct Router[
+    *routes: APIRoute,
+]:
+    fn __init__(out self):
+        pass
