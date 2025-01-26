@@ -1,37 +1,24 @@
 from lightbug_api import (
     App,
-    CoercedQueryDict,
-    CoercedQueryDefinition,
-    ParsableTypes,
     Router,
-    QueryKeyTypePair,
 )
 from lightbug_http import HTTPRequest, HTTPResponse, OK
 
 
 @always_inline
-fn printer(req: HTTPRequest, queries: CoercedQueryDict) raises -> HTTPResponse:
+fn printer(req: HTTPRequest) -> HTTPResponse:
     print("Got a request on ", req.uri.path, " with method ", req.method)
     return OK(req.body_raw)
 
 
 @always_inline
-fn hello(req: HTTPRequest, queries: CoercedQueryDict) raises -> HTTPResponse:
+fn hello(req: HTTPRequest) -> HTTPResponse:
     return OK("Hello 🔥!")
 
 
 @always_inline
-fn queries(req: HTTPRequest, queries: CoercedQueryDict) raises -> HTTPResponse:
+fn nested(req: HTTPRequest) -> HTTPResponse:
     print("Handling route:", req.uri.path)
-    print("Coerced queries are:")
-    for key_val in queries.items():
-        if key_val.value.isa[Int]():
-            print(">", key_val.key, str(key_val.value[Int]))
-        elif key_val.value.isa[Bool]():
-            print(">", key_val.key, str(key_val.value[Bool]))
-        elif key_val.value.isa[Float64]():
-            print(">", key_val.key, str(key_val.value[Float64]))
-
     return OK(req.uri.path)
 
 
@@ -41,16 +28,8 @@ fn main() raises:
     app.get("/", hello)
     app.post("/", printer)
 
-    var queries_router = Router("queries")
-    queries_router.get(
-        path="all/print/",
-        handler=queries,
-        query_definition=CoercedQueryDefinition(
-            QueryKeyTypePair("int", ParsableTypes.Int),
-            QueryKeyTypePair("bool", ParsableTypes.Bool),
-            QueryKeyTypePair("float", ParsableTypes.Float64),
-        ),
-    )
-    app.add_router(queries_router^)
+    var nested_router = Router("nested")
+    nested_router.get(path="all/echo/", handler=nested)
+    app.add_router(nested_router^)
 
-    app.start_server(address="0.0.0.0:9999")
+    app.start_server()

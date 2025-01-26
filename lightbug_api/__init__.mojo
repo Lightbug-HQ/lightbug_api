@@ -17,24 +17,19 @@ struct App:
     fn __init__(inout self) raises:
         self.router = RootRouter()
 
-    # fn func(self, req: HTTPRequest) raises -> HTTPResponse:
-    #     return self.router.func(req)
-
     fn get(
         inout self,
         path: String,
         handler: HTTPHandler,
-        query_definition: CoercedQueryDefinition = CoercedQueryDefinition(),
     ) raises:
-        self.router.get(path, handler, query_definition)
+        self.router.get(path, handler)
 
     fn post(
         inout self,
         path: String,
         handler: HTTPHandler,
-        query_definition: CoercedQueryDefinition = CoercedQueryDefinition(),
     ) raises:
-        self.router.post(path, handler, query_definition)
+        self.router.post(path, handler)
 
     fn add_router(inout self, owned router: Router) raises -> None:
         self.router.add_router(router)
