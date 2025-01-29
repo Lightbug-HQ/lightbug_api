@@ -4,7 +4,7 @@ channels = ["conda-forge", "https://conda.modular.com/max", "https://repo.prefix
 description = "Author APIs in Pure Mojo"
 name = "lightbug_api"
 platforms = ["osx-arm64", "linux-64"]
-version = "0.1.0"
+version = "0.1.1"
 license = "MIT"
 license-file = "LICENSE"
 homepage = "https://github.com/saviorand/lightbug_api"
@@ -19,5 +19,5 @@ test = { cmd = "magic run mojo test -I . tests" }
 format = { cmd = "magic run mojo format -l 120 lightbug_api" }
 
 [dependencies]
-max = ">=24.5.0,<25"
-lightbug_http = "0.1.4"
+max = ">=24.6.0,<25"
+lightbug_http = "0.1.8"

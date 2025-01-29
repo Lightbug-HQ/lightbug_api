@@ -1,19 +1,35 @@
-from lightbug_api import App
+from lightbug_api import (
+    App,
+    Router,
+)
 from lightbug_http import HTTPRequest, HTTPResponse, OK
+
 
 @always_inline
 fn printer(req: HTTPRequest) -> HTTPResponse:
-        print("Got a request on ", req.uri.path, " with method ", req.method)
-        return OK(req.body_raw)
+    print("Got a request on ", req.uri.path, " with method ", req.method)
+    return OK(req.body_raw)
+
 
 @always_inline
 fn hello(req: HTTPRequest) -> HTTPResponse:
-        return OK("Hello 🔥!")
+    return OK("Hello 🔥!")
+
+
+@always_inline
+fn nested(req: HTTPRequest) -> HTTPResponse:
+    print("Handling route:", req.uri.path)
+    return OK(req.uri.path)
+
 
 fn main() raises:
     var app = App()
 
     app.get("/", hello)
     app.post("/", printer)
+
+    var nested_router = Router("nested")
+    nested_router.get(path="all/echo/", handler=nested)
+    app.add_router(nested_router^)
 
     app.start_server()

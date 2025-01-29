@@ -1,27 +1,35 @@
-from lightbug_http import HTTPRequest, HTTPResponse, SysServer, NotFound
-from lightbug_api.routing import Router
+from lightbug_http import HTTPRequest, HTTPResponse, Server
+from lightbug_api.routing import (
+    RootRouter,
+    Router,
+    HTTPHandler,
+)
 
 
 @value
 struct App:
-    var router: Router
+    var router: RootRouter
 
-    fn __init__(inout self):
-        self.router = Router()
+    fn __init__(inout self) raises:
+        self.router = RootRouter()
 
-    fn func(self, req: HTTPRequest) raises -> HTTPResponse:
-        for route_ptr in self.router.routes:
-            var route = route_ptr[]
-            if route.path == req.uri.path and route.method == req.method:
-                return route.handler(req)
-        return NotFound(req.uri.path)
+    fn get(
+        inout self,
+        path: String,
+        handler: HTTPHandler,
+    ) raises:
+        self.router.get(path, handler)
 
-    fn get(inout self, path: String, handler: fn (HTTPRequest) -> HTTPResponse):
-        self.router.add_route(path, "GET", handler)
+    fn post(
+        inout self,
+        path: String,
+        handler: HTTPHandler,
+    ) raises:
+        self.router.post(path, handler)
 
-    fn post(inout self, path: String, handler: fn (HTTPRequest) -> HTTPResponse):
-        self.router.add_route(path, "POST", handler)
+    fn add_router(inout self, owned router: Router) raises -> None:
+        self.router.add_router(router)
 
     fn start_server(inout self, address: StringLiteral = "0.0.0.0:8080") raises:
-        var server = SysServer()
-        server.listen_and_serve(address, self)
+        var server = Server()
+        server.listen_and_serve(address, self.router)
