@@ -7,13 +7,33 @@ from lightbug_http import HTTPRequest, HTTPResponse, OK
 
 @always_inline
 fn printer(req: HTTPRequest) -> HTTPResponse:
-    print("Got a request on ", req.uri.path, " with method ", req.method)
-    return OK(req.body_raw)
+        """Prints the request body and returns it.
 
+        Args:
+            req: Any arbitrary HTTP request with a body.
+
+        Returns:
+                HTTPResponse: 200 OK with the request body.
+        """
+        print("Got a request on ", req.uri.path, " with method ", req.method)
+        return OK(req.body_raw)
 
 @always_inline
 fn hello(req: HTTPRequest) -> HTTPResponse:
-    return OK("Hello 🔥!")
+        """Simple hello world function.
+
+        Args:
+            req: Any arbitrary HTTP request.
+
+        Returns:
+                HTTPResponse: 200 OK with a Hello World message.
+
+        Tags:
+                hello.
+        """
+        return OK("Hello 🔥!", "text/plain; charset=utf-8")
+    print("Got a request on ", req.uri.path, " with method ", req.method)
+    return OK(req.body_raw)
 
 
 @always_inline
@@ -23,13 +43,14 @@ fn nested(req: HTTPRequest) -> HTTPResponse:
 
 
 fn main() raises:
-    var app = App()
+    var app = App[docs_enabled=True]()
 
-    app.get("/", hello)
-    app.post("/", printer)
+    app.get("/", hello, "hello")
+    app.post("/printer", printer, "printer")
 
     var nested_router = Router("nested")
     nested_router.get(path="all/echo/", handler=nested)
     app.add_router(nested_router^)
 
     app.start_server()
+
