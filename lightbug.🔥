@@ -1,5 +1,9 @@
-from lightbug_api.app import App
+from lightbug_api import (
+    App,
+    Router,
+)
 from lightbug_http import HTTPRequest, HTTPResponse, OK
+
 
 @always_inline
 fn printer(req: HTTPRequest) -> HTTPResponse:
@@ -28,12 +32,25 @@ fn hello(req: HTTPRequest) -> HTTPResponse:
                 hello.
         """
         return OK("Hello 🔥!", "text/plain; charset=utf-8")
+    print("Got a request on ", req.uri.path, " with method ", req.method)
+    return OK(req.body_raw)
+
+
+@always_inline
+fn nested(req: HTTPRequest) -> HTTPResponse:
+    print("Handling route:", req.uri.path)
+    return OK(req.uri.path)
+
 
 fn main() raises:
     var app = App[docs_enabled=True]()
 
     app.get("/", hello, "hello")
     app.post("/printer", printer, "printer")
+
+    var nested_router = Router("nested")
+    nested_router.get(path="all/echo/", handler=nested)
+    app.add_router(nested_router^)
 
     app.start_server()
 
