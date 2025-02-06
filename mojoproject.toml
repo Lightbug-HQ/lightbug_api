@@ -20,4 +20,4 @@ format = { cmd = "magic run mojo format -l 120 lightbug_api" }
 
 [dependencies]
 max = ">=24.6.0,<25"
-lightbug_http = "0.1.8"
+lightbug_http = "0.1.10"
