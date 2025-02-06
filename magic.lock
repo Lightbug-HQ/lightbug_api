@@ -131,7 +131,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libxcrypt-4.4.36-hd590300_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libxml2-2.13.5-h064dc61_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/libzlib-1.3.1-h4ab18f5_1.conda
-      - conda: https://repo.prefix.dev/mojo-community/linux-64/lightbug_http-0.1.8-hb0f4dca_0.conda
+      - conda: https://repo.prefix.dev/mojo-community/linux-64/lightbug_http-0.1.10-hb0f4dca_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/lz4-c-1.10.0-h5888daf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/markdown-it-py-3.0.0-pyhd8ed1ab_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/markupsafe-3.0.2-py312h178313f_1.conda
@@ -343,7 +343,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libxcb-1.17.0-hdb1d25a_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libxml2-2.13.5-h376fa9f_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.1-hfb2fe0b_1.conda
-      - conda: https://repo.prefix.dev/mojo-community/osx-arm64/lightbug_http-0.1.8-h60d57d3_0.conda
+      - conda: https://repo.prefix.dev/mojo-community/osx-arm64/lightbug_http-0.1.10-h60d57d3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/llvm-openmp-18.1.8-hde57baf_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/lz4-c-1.9.4-hb7217d7_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/markdown-it-py-3.0.0-pyhd8ed1ab_1.conda
@@ -4014,34 +4014,34 @@ packages:
   timestamp: 1716874262512
 - kind: conda
   name: lightbug_http
-  version: 0.1.8
+  version: 0.1.10
   build: h60d57d3_0
   subdir: osx-arm64
-  url: https://repo.prefix.dev/mojo-community/osx-arm64/lightbug_http-0.1.8-h60d57d3_0.conda
-  sha256: 0ba3009ed9dbdae4728e503288c656131b1d90e555e07e6539d162f869807038
+  url: https://repo.prefix.dev/mojo-community/osx-arm64/lightbug_http-0.1.10-h60d57d3_0.conda
+  sha256: 14a2cbebc60a793165758641e35c3cb66610addec05bafbe2ee023e718631c3f
   depends:
   - max >=24.6.0
   - small_time ==0.1.6
   arch: arm64
   platform: osx
   license: MIT
-  size: 1020548
-  timestamp: 1736359491861
+  size: 1246576
+  timestamp: 1738523886756
 - kind: conda
   name: lightbug_http
-  version: 0.1.8
+  version: 0.1.10
   build: hb0f4dca_0
   subdir: linux-64
-  url: https://repo.prefix.dev/mojo-community/linux-64/lightbug_http-0.1.8-hb0f4dca_0.conda
-  sha256: 966b4ccbcd538df590108e7a6844004cfbd49f07d4a4a2a749147e496a5f8539
+  url: https://repo.prefix.dev/mojo-community/linux-64/lightbug_http-0.1.10-hb0f4dca_0.conda
+  sha256: 1b652b7b5bc0cfa31d6c38beadf57a923b731ad035c550e01dbec2c9e0960fda
   depends:
   - max >=24.6.0
   - small_time ==0.1.6
   arch: x86_64
   platform: linux
   license: MIT
-  size: 1020613
-  timestamp: 1736359486142
+  size: 1246593
+  timestamp: 1738523883901
 - kind: conda
   name: llvm-openmp
   version: 18.1.8

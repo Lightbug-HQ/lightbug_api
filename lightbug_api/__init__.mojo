@@ -1,8 +1,11 @@
 from lightbug_http import HTTPRequest, HTTPResponse, Server
 from lightbug_api.routing import (
+    BaseRequest,
+    FromReq,
     RootRouter,
     Router,
-    HTTPHandler,
+    HandlerResponse,
+    JSONType,
 )
 
 
@@ -13,19 +16,23 @@ struct App:
     fn __init__(inout self) raises:
         self.router = RootRouter()
 
-    fn get(
+    fn get[
+        T: FromReq = BaseRequest
+    ](
         inout self,
         path: String,
-        handler: HTTPHandler,
+        handler: fn (T) raises -> HandlerResponse,
     ) raises:
-        self.router.get(path, handler)
+        self.router.get[T](path, handler)
 
-    fn post(
+    fn post[
+        T: FromReq = BaseRequest
+    ](
         inout self,
         path: String,
-        handler: HTTPHandler,
+        handler: fn (T) raises -> HandlerResponse,
     ) raises:
-        self.router.post(path, handler)
+        self.router.post[T](path, handler)
 
     fn add_router(inout self, owned router: Router) raises -> None:
         self.router.add_router(router)
