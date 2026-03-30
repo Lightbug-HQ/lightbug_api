@@ -1,0 +1,42 @@
+[workspace]
+authors = ["saviorand"]
+channels = ["conda-forge", "https://conda.modular.com/max", "https://repo.prefix.dev/modular-community", "https://repo.prefix.dev/mojo-community"]
+channel-priority = "disabled"
+description = "Author APIs in Pure Mojo"
+platforms = ["osx-arm64", "linux-64"]
+license = "MIT"
+license-file = "LICENSE"
+readme = "README.md"
+homepage = "https://github.com/saviorand/lightbug_api"
+repository = "https://github.com/saviorand/lightbug_api"
+preview = ["pixi-build"]
+
+[package]
+name = "lightbug_api"
+version = "0.1.1"
+
+[package.build]
+backend = { name = "pixi-build-mojo", version = "*" }
+
+[dependencies]
+mojo = ">=0.26.2.0,<0.26.3.0"
+lightbug_http = ">=0.26.2.0,<0.26.3.0"
+
+[package.host-dependencies]
+mojo-compiler = ">=0.26.2.0,<0.26.3.0"
+lightbug_http = ">=0.26.2.0,<0.26.3.0"
+
+[package.build-dependencies]
+mojo-compiler = ">=0.26.2.0,<0.26.3.0"
+
+[package.run-dependencies]
+mojo-compiler = ">=0.26.2.0,<0.26.3.0"
+lightbug_http = ">=0.26.2.0,<0.26.3.0"
+
+[tasks]
+build = { cmd = "pixi build -o ." }
+publish = { cmd = "find . -name 'lightbug_api-*.conda' | xargs pixi upload prefix --channel mojo-community", env = { PREFIX_API_KEY = "$PREFIX_API_KEY" } }
+bp = { depends-on = ["build", "publish"] }
+template = { cmd = "python scripts/templater.py -m default" }
+test = { cmd = "mojo test -I . tests" }
+format = { cmd = "mojo format -l 120 lightbug_api" }

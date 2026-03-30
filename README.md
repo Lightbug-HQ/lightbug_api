@@ -54,7 +54,7 @@ Once you have a Mojo project set up locally,
    lightbug_api = ">=0.1.0.dev2024092905"
    lightbug_http = ">=0.1.4"
    ```
-3. Run `magic install` at the root of your project, where `mojoproject.toml` is located
+3. Run `pixi install` at the root of your project, where `pixi.toml` is located
 4. Lightbug API should now be installed. You can import all the default imports at once, e.g:
     ```mojo
     from lightbug_api import *

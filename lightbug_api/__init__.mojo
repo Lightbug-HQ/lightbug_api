@@ -6,37 +6,25 @@ from lightbug_api.routing import (
     Router,
     HandlerResponse,
     JSONType,
+    Handler,
 )
 
 
-@value
 struct App:
     var router: RootRouter
 
-    fn __init__(inout self) raises:
+    def __init__(out self) raises:
         self.router = RootRouter()
 
-    fn get[
-        T: FromReq = BaseRequest
-    ](
-        inout self,
-        path: String,
-        handler: fn (T) raises -> HandlerResponse,
-    ) raises:
-        self.router.get[T](path, handler)
+    def get(mut self, path: String, handler: Handler) raises:
+        self.router.get(path, handler)
 
-    fn post[
-        T: FromReq = BaseRequest
-    ](
-        inout self,
-        path: String,
-        handler: fn (T) raises -> HandlerResponse,
-    ) raises:
-        self.router.post[T](path, handler)
+    def post(mut self, path: String, handler: Handler) raises:
+        self.router.post(path, handler)
 
-    fn add_router(inout self, owned router: Router) raises -> None:
-        self.router.add_router(router)
+    def add_router(mut self, var router: Router) raises -> None:
+        self.router.add_router(router^)
 
-    fn start_server(inout self, address: StringLiteral = "0.0.0.0:8080") raises:
+    def start_server(mut self, address: String = "0.0.0.0:8080") raises:
         var server = Server()
         server.listen_and_serve(address, self.router)

@@ -1,130 +1,121 @@
-from utils.variant import Variant
-from collections import Dict, List, Optional
-from collections.dict import _DictEntryIter
+from std.utils import Variant
+from std.collections import Dict, List, Optional
 
 from lightbug_http import NotFound, OK, HTTPService, HTTPRequest, HTTPResponse
 from lightbug_http.http import RequestMethod
 from lightbug_http.uri import URIDelimiters
 
-alias MAX_SUB_ROUTER_DEPTH = 20
+comptime MAX_SUB_ROUTER_DEPTH = 20
 
 
 struct RouterErrors:
-    alias ROUTE_NOT_FOUND_ERROR = "ROUTE_NOT_FOUND_ERROR"
-    alias INVALID_PATH_ERROR = "INVALID_PATH_ERROR"
-    alias INVALID_PATH_FRAGMENT_ERROR = "INVALID_PATH_FRAGMENT_ERROR"
+    comptime ROUTE_NOT_FOUND_ERROR = "ROUTE_NOT_FOUND_ERROR"
+    comptime INVALID_PATH_ERROR = "INVALID_PATH_ERROR"
+    comptime INVALID_PATH_FRAGMENT_ERROR = "INVALID_PATH_FRAGMENT_ERROR"
 
-
-alias HTTPHandlerWrapper = fn (req: HTTPRequest) raises escaping -> HTTPResponse
 
 # TODO: Placeholder type, what can the JSON container look like
-alias JSONType = Dict[String, String]
+comptime JSONType = Dict[String, String]
 
-alias HandlerResponse = Variant[HTTPResponse, String, JSONType]
+comptime HandlerResponse = Variant[HTTPResponse, String, JSONType]
+
+# All route handlers share this signature — plain non-capturing function pointer
+comptime Handler = fn (HTTPRequest) raises -> HandlerResponse
 
 
-trait FromReq(Movable, Copyable):
-    fn __init__(out self, request: HTTPRequest, json: JSONType):
+# Utilities for organizing request extraction — not used by router dispatch
+trait FromReq(Copyable, ImplicitlyDestructible):
+    def __init__(out self, request: HTTPRequest, json: JSONType):
         ...
 
-    fn from_request(mut self, req: HTTPRequest) raises -> Self:
+    def from_request(mut self, req: HTTPRequest) raises -> Self:
         ...
 
-    fn __str__(self) -> String:
+    def __str__(self) -> String:
         ...
 
 
-@value
-struct BaseRequest:
+struct BaseRequest(FromReq):
     var request: HTTPRequest
     var json: JSONType
 
-    fn __init__(out self, request: HTTPRequest, json: JSONType):
-        self.request = request
-        self.json = json
+    def __init__(out self, request: HTTPRequest, json: JSONType):
+        self.request = request.copy()
+        self.json = json.copy()
 
-    fn __str__(self) -> String:
-        return str("")
+    def __init__(out self, *, copy: Self):
+        self.request = copy.request.copy()
+        self.json = copy.json.copy()
 
-    fn from_request(mut self, req: HTTPRequest) raises -> Self:
-        return self
+    def __str__(self) -> String:
+        return ""
 
-
-@value
-struct RouteHandler[T: FromReq](CollectionElement):
-    var handler: fn (T) raises -> HandlerResponse
-
-    fn __init__(inout self, h: fn (T) raises -> HandlerResponse):
-        self.handler = h
-
-    fn _encode_response(self, res: HandlerResponse) raises -> HTTPResponse:
-        if res.isa[HTTPResponse]():
-            return res[HTTPResponse]
-        elif res.isa[String]():
-            return OK(res[String])
-        elif res.isa[JSONType]():
-            return OK(self._serialize_json(res[JSONType]))
-        else:
-            raise Error("Unsupported response type")
-
-    fn _serialize_json(self, json: JSONType) raises -> String:
-        # TODO: Placeholder json serialize implementation
-        fn ser(j: JSONType) raises -> String:
-            var str_frags = List[String]()
-            for kv in j.items():
-                str_frags.append(
-                    '"' + str(kv[].key) + '": "' + str(kv[].value) + '"'
-                )
-
-            var str_res = str("{") + str(",").join(str_frags) + str("}")
-            return str_res
-
-        return ser(json)
-
-    fn _deserialize_json(self, req: HTTPRequest) raises -> JSONType:
-        # TODO: Placeholder json deserialize implementation
-        return JSONType()
-
-    fn handle(self, req: HTTPRequest) raises -> HTTPResponse:
-        var payload = T(request=req, json=self._deserialize_json(req))
-        payload = payload.from_request(req)
-        var handler_response = self.handler(payload)
-        return self._encode_response(handler_response^)
+    def from_request(mut self, req: HTTPRequest) raises -> Self:
+        return self.copy()
 
 
-alias HTTPHandlersMap = Dict[String, HTTPHandlerWrapper]
+# Stores a single route entry: (method, path, handler)
+struct RouteEntry(Copyable):
+    var method: String
+    var path: String
+    var handler: Handler
+
+    def __init__(
+        out self,
+        method: String,
+        path: String,
+        handler: Handler,
+    ):
+        self.method = method
+        self.path = path
+        self.handler = handler
+
+    def __init__(out self, *, copy: Self):
+        self.method = copy.method
+        self.path = copy.path
+        self.handler = copy.handler
 
 
-@value
-struct RouterBase[is_main_app: Bool = False](HTTPService):
+struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
     var path_fragment: String
-    var sub_routers: Dict[String, RouterBase[False]]
-    var routes: Dict[String, HTTPHandlersMap]
+    var sub_routers: List[RouterBase[False]]
+    var routes: List[RouteEntry]
 
-    fn __init__(out self: Self) raises:
-        if not is_main_app:
+    def __init__(out self: Self) raises:
+        if not Self.is_main_app:
             raise Error("Sub-router requires url path fragment it will manage")
-        self.__init__(path_fragment="/")
+        self.path_fragment = "/"
+        self.sub_routers = List[RouterBase[False]]()
+        self.routes = List[RouteEntry]()
 
-    fn __init__(out self: Self, path_fragment: String) raises:
+    def __init__(out self: Self, path_fragment: String) raises:
         self.path_fragment = path_fragment
-        self.sub_routers = Dict[String, RouterBase[False]]()
-        self.routes = Dict[String, HTTPHandlersMap]()
-
-        self.routes[RequestMethod.head.value] = HTTPHandlersMap()
-        self.routes[RequestMethod.get.value] = HTTPHandlersMap()
-        self.routes[RequestMethod.put.value] = HTTPHandlersMap()
-        self.routes[RequestMethod.post.value] = HTTPHandlersMap()
-        self.routes[RequestMethod.patch.value] = HTTPHandlersMap()
-        self.routes[RequestMethod.delete.value] = HTTPHandlersMap()
-        self.routes[RequestMethod.options.value] = HTTPHandlersMap()
+        self.sub_routers = List[RouterBase[False]]()
+        self.routes = List[RouteEntry]()
 
         if not self._validate_path_fragment(path_fragment):
             raise Error(RouterErrors.INVALID_PATH_FRAGMENT_ERROR)
 
-    fn _route(
+    def __init__(out self, *, copy: Self):
+        self.path_fragment = copy.path_fragment
+        self.sub_routers = copy.sub_routers.copy()
+        self.routes = copy.routes.copy()
+
+    def _find_sub_router(self, name: String) -> Optional[Int]:
+        for i in range(len(self.sub_routers)):
+            if self.sub_routers[i].path_fragment == name:
+                return Optional(i)
+        return Optional[Int]()
+
+    def _find_route(self, method: String, path: String) -> Optional[Int]:
+        for i in range(len(self.routes)):
+            if self.routes[i].method == method and self.routes[i].path == path:
+                return Optional(i)
+        return Optional[Int]()
+
+    def _route(
         mut self, partial_path: String, method: String, depth: Int = 0
-    ) raises -> HTTPHandlerWrapper:
+    ) raises -> Handler:
         if depth > MAX_SUB_ROUTER_DEPTH:
             raise Error(RouterErrors.ROUTE_NOT_FOUND_ERROR)
 
@@ -134,95 +125,91 @@ struct RouterBase[is_main_app: Bool = False](HTTPService):
 
         if partial_path:
             var fragments = partial_path.split(URIDelimiters.PATH, 1)
-
-            sub_router_name = fragments[0]
+            sub_router_name = String(fragments[0])
             if len(fragments) == 2:
-                remaining_path = fragments[1]
+                remaining_path = String(fragments[1])
             else:
                 remaining_path = ""
-
         else:
             handler_path = URIDelimiters.PATH
 
-        if sub_router_name in self.sub_routers:
-            return self.sub_routers[sub_router_name]._route(
+        var sub_router_idx = self._find_sub_router(sub_router_name)
+        if sub_router_idx:
+            return self.sub_routers[sub_router_idx.value()]._route(
                 remaining_path, method, depth + 1
             )
-        elif handler_path in self.routes[method]:
-            return self.routes[method][handler_path]
+
+        var route_idx = self._find_route(method, handler_path)
+        if route_idx:
+            return self.routes[route_idx.value()].handler
+
+        raise Error(RouterErrors.ROUTE_NOT_FOUND_ERROR)
+
+    def _encode_response(self, var res: HandlerResponse) raises -> HTTPResponse:
+        if res.isa[HTTPResponse]():
+            return res.unsafe_take[HTTPResponse]()
+        elif res.isa[String]():
+            return OK(res[String])
+        elif res.isa[JSONType]():
+            return OK(self._serialize_json(res[JSONType]))
         else:
-            raise Error(RouterErrors.ROUTE_NOT_FOUND_ERROR)
+            raise Error("Unsupported response type")
 
-    fn func(mut self, req: HTTPRequest) raises -> HTTPResponse:
-        var uri = req.uri
-        var path = uri.path.split(URIDelimiters.PATH, 1)[1]
-        var route_handler_meta: HTTPHandlerWrapper
+    def _serialize_json(self, json: JSONType) raises -> String:
+        # TODO: Placeholder json serialize implementation
+        var str_frags = List[String]()
+        for kv in json.items():
+            str_frags.append('"' + kv.key + '": "' + kv.value + '"')
+        return "{" + String(",").join(str_frags) + "}"
+
+    def func(mut self, req: HTTPRequest) raises -> HTTPResponse:
+        var path = String(req.uri.path.split(URIDelimiters.PATH, 1)[1])
+        var handler: Handler
         try:
-            route_handler_meta = self._route(path, req.method)
+            handler = self._route(path, req.method)
         except e:
-            if str(e) == RouterErrors.ROUTE_NOT_FOUND_ERROR:
-                return NotFound(uri.path)
-            raise e
+            if String(e) == RouterErrors.ROUTE_NOT_FOUND_ERROR:
+                return NotFound(String(req.uri.path))
+            raise e^
 
-        return route_handler_meta(req)
+        var res = handler(req)
+        return self._encode_response(res^)
 
-    fn _validate_path_fragment(self, path_fragment: String) -> Bool:
+    def _validate_path_fragment(self, path_fragment: String) -> Bool:
         # TODO: Validate fragment
         return True
 
-    fn _validate_path(self, path: String) -> Bool:
+    def _validate_path(self, path: String) -> Bool:
         # TODO: Validate path
         return True
 
-    fn add_router(mut self, owned router: RouterBase[False]) raises -> None:
-        self.sub_routers[router.path_fragment] = router
+    def add_router(mut self, var router: RouterBase[False]) raises -> None:
+        self.sub_routers.append(router^)
 
-    # fn register[T: FromReq](inout self, path: String, handler: fn(T) raises):
-    #
-    #     fn handle(req: Request) raises:
-    #       RouteHandler[T](handler).handle(req)
-    #
-    #     self.routes[path] = handle
-    #
-    # fn route(self, path: String, req: Request) raises:
-    #     if path in self.routes:
-    #         self.routes[path](req)
-    #     else:
-
-    fn add_route[
-        T: FromReq
-    ](
+    def add_route(
         mut self,
         partial_path: String,
-        handler: fn (T) raises -> HandlerResponse,
-        method: RequestMethod = RequestMethod.get,
+        handler: Handler,
+        method: RequestMethod,
     ) raises -> None:
         if not self._validate_path(partial_path):
             raise Error(RouterErrors.INVALID_PATH_ERROR)
+        self.routes.append(RouteEntry(method.value, partial_path, handler))
 
-        fn handle(req: HTTPRequest) raises -> HTTPResponse:
-            return RouteHandler[T](handler).handle(req)
-
-        self.routes[method.value][partial_path] = handle^
-
-    fn get[
-        T: FromReq = BaseRequest
-    ](
-        inout self,
+    def get(
+        mut self,
         path: String,
-        handler: fn (T) raises -> HandlerResponse,
+        handler: Handler,
     ) raises:
-        self.add_route[T](path, handler, RequestMethod.get)
+        self.add_route(path, handler, materialize[RequestMethod.get]())
 
-    fn post[
-        T: FromReq = BaseRequest
-    ](
-        inout self,
+    def post(
+        mut self,
         path: String,
-        handler: fn (T) raises -> HandlerResponse,
+        handler: Handler,
     ) raises:
-        self.add_route[T](path, handler, RequestMethod.post)
+        self.add_route(path, handler, materialize[RequestMethod.post]())
 
 
-alias RootRouter = RouterBase[True]
-alias Router = RouterBase[False]
+comptime RootRouter = RouterBase[True]
+comptime Router = RouterBase[False]

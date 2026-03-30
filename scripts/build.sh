@@ -11,5 +11,5 @@ fi
 
 echo "Building for environment: ${ENVIRONMENT}"
 
-magic run template -m "${ENVIRONMENT}"
-magic run rattler-build build -r recipes -c https://conda.modular.com/max -c conda-forge --skip-existing=all
+pixi run python scripts/templater.py -m "${ENVIRONMENT}"
+pixi build -o .
