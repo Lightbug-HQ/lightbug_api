@@ -18,7 +18,7 @@
 from lightbug_api import App, Router, HandlerResponse
 from lightbug_api.context import Context
 from lightbug_api.response import Response
-from lightbug_http.http.json import Json, JsonSerializable, JsonDeserializable
+from lightbug_http.http.json import JsonSerializable, JsonDeserializable
 
 
 # ----------------------------------------------------------------- data types
@@ -80,8 +80,7 @@ fn get_item(ctx: Context) raises -> HandlerResponse:
     if verbose == "true":
         print("GET /items/", id, " (verbose mode)")
 
-    # Demonstrate that a bare Json value also works as HandlerResponse.
-    return Json(Item(42, String("Item ", id), 9.99))
+    return Response.json(Item(42, String("Item ", id), 9.99))
 
 
 fn create_item(ctx: Context) raises -> HandlerResponse:
@@ -93,7 +92,6 @@ fn create_item(ctx: Context) raises -> HandlerResponse:
 
 fn update_item(ctx: Context) raises -> HandlerResponse:
     """PUT /items/{id}  — update an item."""
-    var id = ctx.path_param("id", "0")
     var body = ctx.json[CreateItemRequest]()
     return Response.json(Item(42, body.name, body.price))
 

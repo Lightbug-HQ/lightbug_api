@@ -3,7 +3,6 @@ from std.utils import Variant
 
 from lightbug_http import HTTPRequest, HTTPResponse, HTTPService, NotFound, OK
 from lightbug_http.http import RequestMethod
-from lightbug_http.http.json import Json
 from lightbug_http.uri import URIDelimiters
 
 from lightbug_api.context import Context
@@ -22,11 +21,10 @@ struct RouterErrors:
 
 # ---------------------------------------------------------- public type aliases
 
-# The three things a handler may return:
-#   HTTPResponse  — full control (status, headers, body)
+# The two things a handler may return:
+#   HTTPResponse  — full control (status, headers, body); use Response.* helpers
 #   String        — auto-wrapped as 200 OK text/plain
-#   Json          — auto-wrapped as 200 OK application/json
-comptime HandlerResponse = Variant[HTTPResponse, String, Json]
+comptime HandlerResponse = Variant[HTTPResponse, String]
 
 # Every route handler shares this non-capturing function-pointer signature.
 # Use Context to access the request, path params, query params, headers, body.
@@ -87,7 +85,7 @@ struct PathPattern(Copyable):
         # Strip the leading slash so we work in the same space as the
         # partial_path strings the router passes around.
         if len(path) > 0 and path.startswith("/"):
-            path = path[byte=1:]
+            path = String(path[byte=1:])
 
         # Root / empty pattern has no segments.
         if len(path) == 0:
@@ -97,7 +95,7 @@ struct PathPattern(Copyable):
         for i in range(len(parts)):
             var s = String(parts[i])
             if s.startswith("{") and s.endswith("}"):
-                var name = s[byte=1 : len(s) - 1]
+                var name = String(s[byte=1 : len(s) - 1])
                 segments.append(PathSegment(True, name))
             else:
                 segments.append(PathSegment(False, s))
@@ -115,7 +113,7 @@ struct PathPattern(Copyable):
         """
         var check_path = path
         if len(check_path) > 0 and check_path.startswith("/"):
-            check_path = check_path[byte=1:]
+            check_path = String(check_path[byte=1:])
 
         # Empty pattern matches empty (root) path.
         if len(self.segments) == 0:
@@ -149,11 +147,11 @@ struct RouteEntry(Copyable):
     fn __init__(
         out self,
         method: String,
-        pattern: PathPattern,
+        var pattern: PathPattern,
         handler: Handler,
     ):
         self.method = method
-        self.pattern = pattern
+        self.pattern = pattern^
         self.handler = handler
 
     fn __init__(out self, *, copy: Self):
@@ -311,7 +309,7 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
                 return NotFound(String(req.uri.path))
             raise e^
 
-        var ctx = Context(req.copy(), route_match.path_params^)
+        var ctx = Context(req.copy(), route_match.path_params.copy())
         var res = route_match.handler(ctx)
         return self._encode_response(res^)
 
@@ -347,7 +345,8 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
                 continue
             var m = self.routes[i].pattern.match(partial_path)
             if m:
-                return RouteMatch(self.routes[i].handler, m.value()^)
+                var params = m.value().copy()
+                return RouteMatch(self.routes[i].handler, params^)
 
         raise Error(RouterErrors.ROUTE_NOT_FOUND_ERROR)
 
@@ -362,8 +361,6 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
             return res.unsafe_take[HTTPResponse]()
         elif res.isa[String]():
             return OK(res[String])
-        elif res.isa[Json]():
-            return OK(res.unsafe_take[Json]())
         else:
             raise Error("Unsupported HandlerResponse variant")
 

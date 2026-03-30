@@ -53,7 +53,7 @@ struct Response:
         Parameters:
             T: Any type supported by ``emberjson.serialize``.
         """
-        var resp = HTTPResponse(Json(value)^)
+        var resp = HTTPResponse(Json(value))
         resp.status_code = 201
         resp.status_text = "Created"
         return resp^
@@ -61,7 +61,7 @@ struct Response:
     @staticmethod
     fn accepted[T: AnyType](value: T) -> HTTPResponse:
         """202 Accepted — serialize *value* as ``application/json``."""
-        var resp = HTTPResponse(Json(value)^)
+        var resp = HTTPResponse(Json(value))
         resp.status_code = 202
         resp.status_text = "Accepted"
         return resp^
