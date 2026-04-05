@@ -3,6 +3,7 @@ from std.utils import Variant
 
 from lightbug_http import HTTPRequest, HTTPResponse, HTTPService, NotFound, OK
 from lightbug_http.http import RequestMethod
+from lightbug_http.http.common_response import InternalError
 from lightbug_http.uri import URIDelimiters
 
 from lightbug_api.context import Context
@@ -29,6 +30,51 @@ comptime HandlerResponse = Variant[HTTPResponse, String]
 # Every route handler shares this non-capturing function-pointer signature.
 # Use Context to access the request, path params, query params, headers, body.
 comptime Handler = fn (Context) raises -> HandlerResponse
+
+# ------------------------------------------------------------ middleware types
+
+# Middleware return type:
+#   HTTPResponse  — short-circuit: send this response immediately, skip handler
+#   Bool          — continue to the next middleware / handler (value is ignored)
+#
+# Use the helpers ``next()`` and ``abort(response)`` to return these cleanly.
+comptime MiddlewareResult = Variant[HTTPResponse, Bool]
+
+# Every middleware shares this non-capturing function-pointer signature.
+comptime Middleware = fn (Context) raises -> MiddlewareResult
+
+
+fn next() -> MiddlewareResult:
+    """Signal that processing should continue to the next middleware / handler."""
+    return MiddlewareResult(True)
+
+
+fn abort(var response: HTTPResponse) -> MiddlewareResult:
+    """Short-circuit the request with *response*, skipping all further processing."""
+    return MiddlewareResult(response^)
+
+
+# Wrapper so Middleware function pointers can live in a List[MiddlewareEntry].
+struct MiddlewareEntry(Copyable):
+    var handler: Middleware
+
+    fn __init__(out self, handler: Middleware):
+        self.handler = handler
+
+    fn __init__(out self, *, copy: Self):
+        self.handler = copy.handler
+
+
+# ------------------------------------------------------------ error handler
+
+# Called when a route handler raises an unhandled error.
+# Return an appropriate HTTPResponse; the exception is consumed.
+comptime ErrorHandler = fn (Context, Error) raises -> HTTPResponse
+
+
+fn _default_error_handler(ctx: Context, e: Error) raises -> HTTPResponse:
+    print("lightbug_api error:", String(e))
+    return InternalError()
 
 
 # --------------------------------------------------------------- path matching
@@ -229,6 +275,8 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
     var path_fragment: String
     var sub_routers: List[RouterBase[False]]
     var routes: List[RouteEntry]
+    var middleware: List[MiddlewareEntry]
+    var error_handler: ErrorHandler
 
     # ------------------------------------------------------------------ init
 
@@ -238,11 +286,15 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
         self.path_fragment = "/"
         self.sub_routers = List[RouterBase[False]]()
         self.routes = List[RouteEntry]()
+        self.middleware = List[MiddlewareEntry]()
+        self.error_handler = _default_error_handler
 
     def __init__(out self: Self, path_fragment: String) raises:
         self.path_fragment = path_fragment
         self.sub_routers = List[RouterBase[False]]()
         self.routes = List[RouteEntry]()
+        self.middleware = List[MiddlewareEntry]()
+        self.error_handler = _default_error_handler
 
         if not self._validate_path_fragment(path_fragment):
             raise Error(RouterErrors.INVALID_PATH_FRAGMENT_ERROR)
@@ -251,6 +303,8 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
         self.path_fragment = copy.path_fragment
         self.sub_routers = copy.sub_routers.copy()
         self.routes = copy.routes.copy()
+        self.middleware = copy.middleware.copy()
+        self.error_handler = copy.error_handler
 
     # -------------------------------------------------------- route registration
 
@@ -296,6 +350,23 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
         """Mount a sub-router, nesting all its routes under its path fragment."""
         self.sub_routers.append(router^)
 
+    def use(mut self, middleware: Middleware) -> None:
+        """Add a middleware function that runs before every handler on this router.
+
+        Middleware runs in registration order. Return ``next()`` to continue,
+        or ``abort(response)`` to short-circuit.
+
+        Example::
+
+            fn require_auth(ctx: Context) raises -> MiddlewareResult:
+                if not ctx.header("Authorization"):
+                    return abort(Response.unauthorized())
+                return next()
+
+            app.use(require_auth)
+        """
+        self.middleware.append(MiddlewareEntry(middleware))
+
     # ---------------------------------------------------------------- dispatch
 
     def func(mut self, req: HTTPRequest) raises -> HTTPResponse:
@@ -310,7 +381,21 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
             raise e^
 
         var ctx = Context(req.copy(), route_match.path_params.copy())
-        var res = route_match.handler(ctx)
+
+        # Run middleware chain — any middleware may short-circuit with a response.
+        for i in range(len(self.middleware)):
+            var mw_result = self.middleware[i].handler(ctx)
+            if mw_result.isa[HTTPResponse]():
+                return mw_result.unsafe_take[HTTPResponse]()
+            # else Bool → continue to next middleware / handler
+
+        # Dispatch to the matched handler; convert unhandled errors to responses.
+        var res: HandlerResponse
+        try:
+            res = route_match.handler(ctx)
+        except e:
+            return self.error_handler(ctx, e)
+
         return self._encode_response(res^)
 
     # --------------------------------------------------------------- internals
