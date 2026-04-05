@@ -11,11 +11,21 @@ from lightbug_api.routing import (
     MiddlewareEntry,
     MiddlewareResult,
     PathPattern,
+    Route,
     RouteMatch,
     RootRouter,
     Router,
+    GET,
+    POST,
+    PUT,
+    DELETE,
+    PATCH,
+    OPTIONS,
+    HEAD,
+    mount,
     abort,
     next,
+    _apply_routes,
 )
 
 
@@ -38,31 +48,28 @@ struct StartupHookEntry(Copyable):
 struct App:
     """The top-level application — register routes then call ``run()``.
 
-    **Quick-start**::
+    **Declarative style** (recommended)::
+
+        fn main() raises:
+            App(
+                GET("/",              index),
+                GET("/users/{id}",    get_user),
+                POST("/users",        create_user),
+                DELETE("/users/{id}", delete_user),
+                mount("v1",
+                    GET("status", health),
+                ),
+            ).run()
+
+    **Builder style** (for dynamic or conditional registration)::
 
         fn main() raises:
             var app = App()
-
-            # Routes
-            app.get("/",              index)
-            app.get("/users/{id}",    get_user)
-            app.post("/users",        create_user)
-            app.delete("/users/{id}", delete_user)
-
-            # Sub-router mounted at /v1
-            var api = Router("v1")
-            api.get("status", health)
-            app.add_router(api^)
-
-            # Middleware — runs before every handler
+            app.get("/",           index)
+            app.post("/users",     create_user)
             app.use(require_auth)
-
-            # Error handler — catches unhandled exceptions from handlers
-            app.on_error(my_error_handler)
-
-            # Startup hook — runs once before the server starts
             app.on_startup(connect_db)
-
+            app.on_error(my_error_handler)
             app.run()
     """
 
@@ -70,8 +77,27 @@ struct App:
     var startup_hooks: List[StartupHookEntry]
 
     def __init__(out self) raises:
+        """Create an empty app for use with the builder style."""
         self.router = RootRouter()
         self.startup_hooks = List[StartupHookEntry]()
+
+    def __init__(out self, *routes: Route) raises:
+        """Create an app from a declarative list of Route specs.
+
+        Example::
+
+            App(
+                GET("/",       index),
+                POST("/items", create_item),
+                mount("v1", GET("status", health)),
+            ).run()
+        """
+        self.router = RootRouter()
+        self.startup_hooks = List[StartupHookEntry]()
+        var route_list = List[Route]()
+        for i in range(len(routes)):
+            route_list.append(routes[i].copy())
+        _apply_routes[True](self.router, route_list)
 
     # ------------------------------------------ route registration
 

@@ -458,3 +458,128 @@ struct RouterBase[is_main_app: Bool = False](HTTPService, Copyable):
 
 comptime RootRouter = RouterBase[True]
 comptime Router = RouterBase[False]
+
+
+# ================================================================ Route DSL
+# Declarative routing — pass Route values directly to App():
+#
+#   App(
+#       GET("/",           index),
+#       GET("/items/{id}", get_item),
+#       POST("/items",     create_item),
+#       mount("v1",
+#           GET("status", health),
+#       ),
+#   ).run()
+
+fn _no_op_handler(ctx: Context) raises -> HandlerResponse:
+    """Sentinel handler for mount nodes — never called at runtime."""
+    return HandlerResponse(String(""))
+
+
+struct Route(Copyable):
+    """A declarative route spec — either a leaf route or a sub-router mount.
+
+    Create instances via the ``GET``, ``POST``, … and ``mount`` helpers.
+    Pass them to ``App(...)`` for one-shot declarative registration::
+
+        App(
+            GET("/users",      list_users),
+            POST("/users",     create_user),
+            GET("/users/{id}", get_user),
+            mount("v1",
+                GET("status", health),
+            ),
+        ).run()
+    """
+
+    var method: String      # HTTP verb, or "MOUNT" for sub-router nodes
+    var path: String        # route path  (leaf routes)
+    var fragment: String    # mount prefix (mount nodes)
+    var handler: Handler    # route handler; _no_op_handler for mounts
+    var children: List[Route]
+
+    fn __init__(out self, method: String, path: String, handler: Handler):
+        self.method = method
+        self.path = path
+        self.fragment = ""
+        self.handler = handler
+        self.children = List[Route]()
+
+    fn __init__(out self, fragment: String, var children: List[Route]):
+        self.method = "MOUNT"
+        self.path = ""
+        self.fragment = fragment
+        self.handler = _no_op_handler
+        self.children = children^
+
+    fn __init__(out self, *, copy: Self):
+        self.method = copy.method
+        self.path = copy.path
+        self.fragment = copy.fragment
+        self.handler = copy.handler
+        self.children = copy.children.copy()
+
+
+fn GET(path: String, handler: Handler) -> Route:
+    """Declare a GET route."""
+    return Route("GET", path, handler)
+
+
+fn POST(path: String, handler: Handler) -> Route:
+    """Declare a POST route."""
+    return Route("POST", path, handler)
+
+
+fn PUT(path: String, handler: Handler) -> Route:
+    """Declare a PUT route."""
+    return Route("PUT", path, handler)
+
+
+fn DELETE(path: String, handler: Handler) -> Route:
+    """Declare a DELETE route."""
+    return Route("DELETE", path, handler)
+
+
+fn PATCH(path: String, handler: Handler) -> Route:
+    """Declare a PATCH route."""
+    return Route("PATCH", path, handler)
+
+
+fn OPTIONS(path: String, handler: Handler) -> Route:
+    """Declare an OPTIONS route."""
+    return Route("OPTIONS", path, handler)
+
+
+fn HEAD(path: String, handler: Handler) -> Route:
+    """Declare a HEAD route."""
+    return Route("HEAD", path, handler)
+
+
+fn mount(fragment: String, *children: Route) -> Route:
+    """Declare a sub-router mounted at *fragment*.
+
+    All child routes are served under the ``/<fragment>/`` prefix::
+
+        mount("v1",
+            GET("status",  health),
+            GET("version", version),
+        )
+        # → GET /v1/status, GET /v1/version
+    """
+    var child_list = List[Route]()
+    for i in range(len(children)):
+        child_list.append(children[i].copy())
+    return Route(fragment, child_list^)
+
+
+fn _apply_routes[is_main: Bool](mut router: RouterBase[is_main], routes: List[Route]) raises:
+    """Register a list of ``Route`` specs onto *router*, recursing into mounts."""
+    for i in range(len(routes)):
+        var r = routes[i].copy()
+        if r.method == "MOUNT":
+            var sub = RouterBase[False](r.fragment)
+            _apply_routes[False](sub, r.children)
+            router.add_router(sub^)
+        else:
+            router.add_route(r.path, r.handler, RequestMethod(r.method))

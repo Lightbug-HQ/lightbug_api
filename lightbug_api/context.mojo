@@ -145,7 +145,52 @@ struct Context(Copyable):
             return result.value()
         return default
 
+    # -------------------------------------------- unified typed path params
+    # Overload dispatch is based on the type of *default*:
+    #
+    #   ctx.param("id")          → Optional[String]
+    #   ctx.param("id", "0")     → String
+    #   ctx.param("id", 0)       → Int
+    #   ctx.param("flag", False) → Bool
+
+    fn param(self, name: String) -> Optional[String]:
+        """Look up a path parameter by name (alias for ``path_param``)."""
+        return self.path_param(name)
+
+    fn param(self, name: String, default: String) -> String:
+        """Look up a path parameter, falling back to *default*."""
+        return self.path_param(name, default)
+
+    fn param(self, name: String, default: Int) -> Int:
+        """Look up a path parameter and parse it as ``Int``.
+
+        Example::
+
+            var id = ctx.param("id", 0)
+        """
+        var s = self.path_param(name)
+        if s:
+            try:
+                return atol(s.value())
+            except:
+                pass
+        return default
+
+    fn param(self, name: String, default: Bool) -> Bool:
+        """Look up a path parameter and parse it as ``Bool``.
+
+        Truthy values: ``"true"``, ``"1"``, ``"yes"``::
+
+            var flag = ctx.param("enabled", False)
+        """
+        var s = self.path_param(name)
+        if s:
+            var v = s.value()
+            return v == "true" or v == "1" or v == "yes"
+        return default
+
     # ------------------------------------------------------- typed path params
+    # Kept for backwards compatibility.
 
     fn path_int(self, name: String) -> Optional[Int]:
         """Parse a path parameter as ``Int``.
@@ -162,17 +207,22 @@ struct Context(Copyable):
 
     fn path_int(self, name: String, default: Int) -> Int:
         """Parse a path parameter as ``Int``, falling back to *default*."""
-        var result = self.path_int(name)
-        if result:
-            return result.value()
-        return default
+        return self.param(name, default)
 
-    # ------------------------------------------------------ typed query params
+    # ---------------------------------------------- unified typed query params
+    # Overload dispatch is based on the type of *default*:
+    #
+    #   ctx.query("page")           → Optional[String]  (existing overload above)
+    #   ctx.query("page", "1")      → String             (existing overload above)
+    #   ctx.query("page", 1)        → Int
+    #   ctx.query("verbose", False) → Bool
 
-    fn query_int(self, name: String, default: Int = 0) -> Int:
-        """Parse a query parameter as ``Int``, falling back to *default*.
+    fn query(self, name: String, default: Int) -> Int:
+        """Look up a query parameter and parse it as ``Int``.
 
-        Example: ``ctx.query_int("page", 1)``
+        Example::
+
+            var page = ctx.query("page", 1)
         """
         var s = self.query(name)
         if s:
@@ -182,18 +232,29 @@ struct Context(Copyable):
                 pass
         return default
 
-    fn query_bool(self, name: String, default: Bool = False) -> Bool:
-        """Parse a query parameter as ``Bool``, falling back to *default*.
+    fn query(self, name: String, default: Bool) -> Bool:
+        """Look up a query parameter and parse it as ``Bool``.
 
-        Truthy string values: ``"true"``, ``"1"``, ``"yes"``.
+        Truthy values: ``"true"``, ``"1"``, ``"yes"``::
 
-        Example: ``ctx.query_bool("verbose")``
+            var verbose = ctx.query("verbose", False)
         """
         var s = self.query(name)
         if s:
             var v = s.value()
             return v == "true" or v == "1" or v == "yes"
         return default
+
+    # ------------------------------------------------------ typed query params
+    # Kept for backwards compatibility.
+
+    fn query_int(self, name: String, default: Int = 0) -> Int:
+        """Parse a query parameter as ``Int``, falling back to *default*."""
+        return self.query(name, default)
+
+    fn query_bool(self, name: String, default: Bool = False) -> Bool:
+        """Parse a query parameter as ``Bool``, falling back to *default*."""
+        return self.query(name, default)
 
     # ---------------------------------------------------------------- headers
 
