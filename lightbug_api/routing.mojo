@@ -6,6 +6,9 @@ from lightbug_http.http import RequestMethod
 from lightbug_http.http.common_response import InternalError
 from lightbug_http.uri import URIDelimiters
 
+from lightbug_http import OK
+from lightbug_http.http.json import Json
+
 from lightbug_api.context import Context
 
 
@@ -30,6 +33,16 @@ comptime HandlerResponse = Variant[HTTPResponse, String]
 # Every route handler shares this non-capturing function-pointer signature.
 # Use Context to access the request, path params, query params, headers, body.
 comptime Handler = fn (Context) raises -> HandlerResponse
+
+
+# Compile-time adapter: specialises into a concrete Handler for any fn that
+# returns a JSON-serialisable T.  Because `h` is a compile-time parameter the
+# resulting specialisation has zero extra overhead vs writing the wrapper by hand.
+fn _json_adapter[T: Movable & ImplicitlyDestructible, h: fn (Context) raises -> T](
+    ctx: Context,
+) raises -> HandlerResponse:
+    return HandlerResponse(OK(Json(h(ctx))))
+
 
 # ------------------------------------------------------------ middleware types
 
@@ -583,3 +596,115 @@ fn _apply_routes[is_main: Bool](mut router: RouterBase[is_main], routes: List[Ro
             router.add_router(sub^)
         else:
             router.add_route(r.path, r.handler, RequestMethod(r.method))
+
+
+# ================================================================ Typed route builders
+# Parametric overloads that let handlers return model types directly instead of
+# wrapping everything in ``HandlerResponse``.  ``_json_adapter`` is specialised
+# at compile time so there is zero runtime overhead over hand-written wrappers.
+#
+# Usage::
+#
+#   fn get_item(ctx: Context) raises -> Item:   # no Response.json() needed
+#       return Item(ctx.param("id", 0), "Widget", 9.99)
+#
+#   GET[Item, get_item]("/items/{id}")           # T is often inferable
+
+fn GET[T: Movable & ImplicitlyDestructible, h: fn (Context) raises -> T](path: String) -> Route:
+    """GET route whose handler returns *T* directly — auto-serialised as JSON."""
+    return Route("GET", path, _json_adapter[T, h])
+
+
+fn POST[T: Movable & ImplicitlyDestructible, h: fn (Context) raises -> T](path: String) -> Route:
+    """POST route whose handler returns *T* directly — auto-serialised as JSON."""
+    return Route("POST", path, _json_adapter[T, h])
+
+
+fn PUT[T: Movable & ImplicitlyDestructible, h: fn (Context) raises -> T](path: String) -> Route:
+    """PUT route whose handler returns *T* directly — auto-serialised as JSON."""
+    return Route("PUT", path, _json_adapter[T, h])
+
+
+fn DELETE[T: Movable & ImplicitlyDestructible, h: fn (Context) raises -> T](path: String) -> Route:
+    """DELETE route whose handler returns *T* directly — auto-serialised as JSON."""
+    return Route("DELETE", path, _json_adapter[T, h])
+
+
+fn PATCH[T: Movable & ImplicitlyDestructible, h: fn (Context) raises -> T](path: String) -> Route:
+    """PATCH route whose handler returns *T* directly — auto-serialised as JSON."""
+    return Route("PATCH", path, _json_adapter[T, h])
+
+
+# ================================================================ Resource trait
+# Declare a struct-based CRUD controller and register all five standard routes
+# in one call::
+#
+#   struct Items(Resource):
+#       @staticmethod
+#       fn index(ctx: Context) raises -> HandlerResponse: ...
+#       @staticmethod
+#       fn show(ctx: Context) raises -> HandlerResponse: ...
+#       @staticmethod
+#       fn create(ctx: Context) raises -> HandlerResponse: ...
+#       @staticmethod
+#       fn update(ctx: Context) raises -> HandlerResponse: ...
+#       @staticmethod
+#       fn destroy(ctx: Context) raises -> HandlerResponse: ...
+#
+#   App(resource[Items]("items")).run()
+#   # → GET /items, GET /items/{id}, POST /items, PUT /items/{id}, DELETE /items/{id}
+
+trait Resource:
+    """Struct-based CRUD resource controller.
+
+    Implement all five static methods then register with ``resource[R](fragment)``.
+    Static methods mean no instance is needed — the struct is purely a namespace.
+    """
+
+    @staticmethod
+    fn index(ctx: Context) raises -> HandlerResponse:
+        """GET /  — list all resources."""
+        ...
+
+    @staticmethod
+    fn show(ctx: Context) raises -> HandlerResponse:
+        """GET /{id}  — retrieve one resource."""
+        ...
+
+    @staticmethod
+    fn create(ctx: Context) raises -> HandlerResponse:
+        """POST /  — create a resource."""
+        ...
+
+    @staticmethod
+    fn update(ctx: Context) raises -> HandlerResponse:
+        """PUT /{id}  — replace a resource."""
+        ...
+
+    @staticmethod
+    fn destroy(ctx: Context) raises -> HandlerResponse:
+        """DELETE /{id}  — remove a resource."""
+        ...
+
+
+fn resource[R: Resource](fragment: String) -> Route:
+    """Declare a full CRUD resource mounted at *fragment*.
+
+    Equivalent to::
+
+        mount(fragment,
+            GET("",        R.index),
+            GET("{id}",    R.show),
+            POST("",       R.create),
+            PUT("{id}",    R.update),
+            DELETE("{id}", R.destroy),
+        )
+    """
+    return mount(
+        fragment,
+        GET("",        R.index),
+        GET("{id}",    R.show),
+        POST("",       R.create),
+        PUT("{id}",    R.update),
+        DELETE("{id}", R.destroy),
+    )

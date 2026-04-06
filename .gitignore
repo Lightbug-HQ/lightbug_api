@@ -11,3 +11,4 @@
 
 # magic environments
 .magic
+*.xml

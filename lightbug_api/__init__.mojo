@@ -26,6 +26,8 @@ from lightbug_api.routing import (
     abort,
     next,
     _apply_routes,
+    Resource,
+    resource,
 )
 
 
